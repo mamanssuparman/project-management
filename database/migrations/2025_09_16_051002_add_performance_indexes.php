@@ -162,7 +162,23 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
-        $indexes = DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$indexName]);
-        return count($indexes) > 0;
+        $driver = DB::getDriverName();
+
+        if ($driver === 'pgsql') {
+            // PostgreSQL version
+            return DB::table('pg_indexes')
+                ->where('tablename', $table)
+                ->where('indexname', $indexName)
+                ->exists();
+        }
+
+        if ($driver === 'mysql') {
+            // MySQL version
+            $indexes = DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$indexName]);
+            return count($indexes) > 0;
+        }
+
+        // Default fallback (other drivers)
+        return false;
     }
 };

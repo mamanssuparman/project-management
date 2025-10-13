@@ -11,87 +11,94 @@ use Carbon\Carbon;
 class MonthlyTicketTrendChart extends ChartWidget
 {
     use HasWidgetShield;
-    
+
     protected static ?string $heading = 'Monthly Ticket Creation Trend';
-    
+
     protected static ?int $sort = 4;
-    
+
     protected int | string | array $columnSpan = [
         'md' => 2,
         'xl' => 2,
     ];
-    
+
     protected static ?string $maxHeight = '300px';
-    
+
     protected static ?string $pollingInterval = '60s';
-    
+
     protected function getData(): array
     {
         $user = auth()->user();
         $isSuperAdmin = $user->hasRole('super_admin');
-        
+
         // Get the earliest ticket date
         $earliestTicketQuery = Ticket::query();
-        
+
         if (!$isSuperAdmin) {
             $earliestTicketQuery->whereHas('project.members', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             });
         }
-        
+
         $earliestTicket = $earliestTicketQuery->orderBy('created_at', 'asc')->first();
-        
+
         if (!$earliestTicket) {
             return [
                 'datasets' => [],
                 'labels' => [],
             ];
         }
-        
+
         // Calculate months from earliest ticket to now
         $startDate = Carbon::parse($earliestTicket->created_at)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
-        
+
         $months = collect();
         $currentDate = $startDate->copy();
-        
+
         while ($currentDate->lte($endDate)) {
             $months->push($currentDate->copy());
             $currentDate->addMonth();
         }
-        
+
         $labels = $months->map(function ($month) {
             return $month->format('M Y');
         })->toArray();
-        
+
         // Query tickets created per month
+        $driver = DB::getDriverName();
+
+        $getYear = $driver === 'pgsql' ? 'EXTRACT(YEAR FROM created_at)' : 'YEAR(created_at)';
+        $getMonth = $driver === 'pgsql' ? 'EXTRACT(MONTH FROM created_at)' : 'MONTH(created_at)';
+
+        $yearKey = $driver === 'pgsql' ? 'EXTRACT(YEAR FROM created_at)' : 'year';
+        $monthKey = $driver === 'pgsql' ? 'EXTRACT(MONTH FROM created_at)' : 'month';
+
         $ticketsQuery = Ticket::query()
             ->select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('COUNT(*) as total')
+                DB::raw("$getYear AS year"),
+                DB::raw("$getMonth AS month"),
+                DB::raw('COUNT(*) AS total')
             )
             ->where('created_at', '>=', $startDate)
-            ->groupBy('year', 'month')
-            ->orderBy('year')
-            ->orderBy('month');
-            
+            ->groupByRaw("$yearKey, $monthKey")
+            ->orderByRaw("$yearKey, $monthKey");
+
         if (!$isSuperAdmin) {
             $ticketsQuery->whereHas('project.members', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             });
         }
-        
+
         $ticketData = $ticketsQuery->get()->keyBy(function ($item) {
             return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
         });
-        
+
         // Fill data for each month
         $data = $months->map(function ($month) use ($ticketData) {
             $key = $month->format('Y-m');
             return $ticketData->get($key)->total ?? 0;
         })->toArray();
-        
+
         return [
             'datasets' => [
                 [
@@ -107,12 +114,12 @@ class MonthlyTicketTrendChart extends ChartWidget
             'labels' => $labels,
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'line';
     }
-    
+
     protected function getOptions(): array
     {
         return [
