@@ -2,19 +2,20 @@
 
 namespace App\Livewire;
 
-use App\Models\ExternalAccess;
-use App\Models\Project;
-use App\Models\Ticket;
-use App\Models\TicketHistory;
-use App\Models\TicketPriority;
-use App\Models\TicketStatus;
 use Carbon\Carbon;
+use App\Models\Ticket;
+use App\Models\Project;
+use Livewire\Component;
+use App\Models\TicketStatus;
+use Livewire\WithPagination;
+use App\Models\TicketHistory;
+use App\Models\ExternalAccess;
+use App\Models\TicketPriority;
+use Livewire\Attributes\Layout;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Livewire\Attributes\Layout;
-use Livewire\Component;
-use Livewire\WithPagination;
 
 #[Layout('layouts.external')]
 class ExternalDashboard extends Component
@@ -238,6 +239,7 @@ class ExternalDashboard extends Component
 
     public function loadWidgetData()
     {
+        $driver = DB::getDriverName();
         $remainingDays = null;
         if ($this->project->end_date) {
             $remainingDays = (int) Carbon::now()->diffInDays(Carbon::parse($this->project->end_date), false);
@@ -276,11 +278,15 @@ class ExternalDashboard extends Component
             ->where('updated_at', '>=', Carbon::now()->subDays(7))
             ->count();
 
+
+        $getMonth = $driver === 'pgsql' ? "TO_CHAR(created_at, 'YYYY-MM')" : "DATE_FORMAT(created_at, '%Y-%m')";
+        $monthKey = $driver === 'pgsql' ? "TO_CHAR(created_at, 'YYYY-MM')" : "month";
+
         $this->monthlyTrend = $this->project->tickets()
-            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
+            ->selectRaw("$getMonth as month, COUNT(*) as count")
             ->where('created_at', '>=', Carbon::now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
+            ->groupByRaw($monthKey)
+            ->orderByRaw($monthKey)
             ->pluck('count', 'month')
             ->toArray();
     }
