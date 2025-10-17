@@ -26,6 +26,11 @@ class EpicsRelationManager extends RelationManager
                     ->required()
                     ->maxLength(255)
                     ->label('Epic Name'),
+                Forms\Components\TextInput::make('sort_order')
+                    ->numeric()
+                    ->default(0)
+                    ->label('Sort Order')
+                    ->helperText('Lower numbers appear first'),
                 Forms\Components\DatePicker::make('start_date')
                     ->label('Start Date')
                     ->nullable(),
@@ -43,6 +48,9 @@ class EpicsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Order')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -75,6 +83,6 @@ class EpicsRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'asc');
+            ->defaultSort('sort_order', 'asc');
     }
 }

@@ -17,6 +17,7 @@ class Epic extends Model
         'description',
         'start_date',
         'end_date',
+        'sort_order',
     ];
 
     protected $casts = [
