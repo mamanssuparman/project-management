@@ -43,13 +43,7 @@ class ExternalDashboard extends Component
     public $newTicketsThisWeek = 0;
     public $completedThisWeek = 0;
 
-    // Project Status properties
-    public $projectStatusData = [];
-    public $statusReportType = 'weekly'; // 'weekly' or 'overall'
-    public $currentProjectStatus = 'ontrack'; // 'ontrack', 'risk', 'delay'
-    public $previousProjectStatus = 'ontrack';
-    public $actualProgress = 0;
-    public $plannedProgress = 0;
+
 
     // Cache gantt data to prevent re-rendering on pagination
     public $ganttDataCache = null;
@@ -68,7 +62,6 @@ class ExternalDashboard extends Component
             // Refresh all dynamic data
             $this->loadDashboardData();
             $this->loadWidgetData();
-            $this->loadProjectStatusData();
 
             // Clear gantt cache to force refresh
             $this->ganttDataCache = null;
@@ -127,7 +120,6 @@ class ExternalDashboard extends Component
         $this->loadStaticData();
         $this->loadDashboardData();
         $this->loadWidgetData();
-        $this->loadProjectStatusData();
     }
 
     public function getTicketsProperty()
@@ -460,167 +452,17 @@ class ExternalDashboard extends Component
         if ($tabName === 'timeline') {
             $this->dispatch('switch-to-timeline');
         }
-
-        // Load project status data when switching to status tab
-        if ($tabName === 'status') {
-            $this->loadProjectStatusData();
-        }
     }
 
-    public function updateStatusReportType($type)
-    {
-        $this->statusReportType = $type;
-        $this->loadProjectStatusData();
 
-        // Dispatch event to update chart
-        $this->dispatch('statusReportUpdated');
-    }
 
-    public function loadProjectStatusData()
-    {
-        try {
-            if ($this->statusReportType === 'weekly') {
-                $this->projectStatusData = $this->generateWeeklyStatusData();
-            } else {
-                $this->projectStatusData = $this->generateOverallStatusData();
-            }
 
-            $this->calculateProjectStatus();
-        } catch (\Exception $e) {
-            \Log::error('Error loading project status data: ' . $e->getMessage());
-            $this->projectStatusData = [];
-        }
-    }
 
-    private function generateWeeklyStatusData(): array
-    {
-        $startDate = $this->project->start_date ? Carbon::parse($this->project->start_date) : Carbon::now()->subMonths(3);
-        $endDate = $this->project->end_date ? Carbon::parse($this->project->end_date) : Carbon::now()->addMonths(1);
 
-        $weeks = [];
-        $currentWeek = $startDate->copy()->startOfWeek();
 
-        while ($currentWeek->lte($endDate)) {
-            $weekEnd = $currentWeek->copy()->endOfWeek();
 
-            // Calculate planned progress for this week
-            $totalWeeks = $startDate->diffInWeeks($endDate);
-            $weekNumber = $startDate->diffInWeeks($currentWeek) + 1;
-            $plannedProgress = $totalWeeks > 0 ? ($weekNumber / $totalWeeks) * 100 : 0;
 
-            // Calculate actual progress (tickets completed by this week)
-            $completedTickets = $this->project->tickets()
-                ->whereHas('status', function ($q) {
-                    $q->where('is_completed', true);
-                })
-                ->where('updated_at', '<=', $weekEnd)
-                ->count();
 
-            $totalTickets = $this->project->tickets()->count();
-            $actualProgress = $totalTickets > 0 ? ($completedTickets / $totalTickets) * 100 : 0;
-
-            // Calculate deviation
-            $deviation = $actualProgress - $plannedProgress;
-
-            $weeks[] = [
-                'period' => $currentWeek->format('M d'),
-                'week_start' => $currentWeek->format('Y-m-d'),
-                'week_end' => $weekEnd->format('Y-m-d'),
-                'planned' => round($plannedProgress, 1),
-                'actual' => round($actualProgress, 1),
-                'deviation' => round($deviation, 1),
-                'status' => $this->determineWeekStatus($deviation)
-            ];
-
-            $currentWeek->addWeek();
-        }
-
-        return $weeks;
-    }
-
-    private function generateOverallStatusData(): array
-    {
-        $startDate = $this->project->start_date ? Carbon::parse($this->project->start_date) : Carbon::now()->subMonths(3);
-        $endDate = $this->project->end_date ? Carbon::parse($this->project->end_date) : Carbon::now()->addMonths(1);
-
-        $months = [];
-        $currentMonth = $startDate->copy()->startOfMonth();
-
-        while ($currentMonth->lte($endDate)) {
-            $monthEnd = $currentMonth->copy()->endOfMonth();
-
-            // Calculate planned progress for this month
-            $totalDuration = $startDate->diffInDays($endDate);
-            $daysPassed = $startDate->diffInDays($currentMonth->copy()->endOfMonth());
-            $plannedProgress = $totalDuration > 0 ? ($daysPassed / $totalDuration) * 100 : 0;
-
-            // Calculate actual progress
-            $completedTickets = $this->project->tickets()
-                ->whereHas('status', function ($q) {
-                    $q->where('is_completed', true);
-                })
-                ->where('updated_at', '<=', $monthEnd)
-                ->count();
-
-            $totalTickets = $this->project->tickets()->count();
-            $actualProgress = $totalTickets > 0 ? ($completedTickets / $totalTickets) * 100 : 0;
-
-            // Calculate deviation
-            $deviation = $actualProgress - $plannedProgress;
-
-            $months[] = [
-                'period' => $currentMonth->format('M Y'),
-                'month_start' => $currentMonth->format('Y-m-d'),
-                'month_end' => $monthEnd->format('Y-m-d'),
-                'planned' => round(max(0, min(100, $plannedProgress)), 1),
-                'actual' => round($actualProgress, 1),
-                'deviation' => round($deviation, 1),
-                'status' => $this->determineWeekStatus($deviation)
-            ];
-
-            $currentMonth->addMonth();
-        }
-
-        return $months;
-    }
-
-    private function calculateProjectStatus()
-    {
-        // Store previous status
-        $this->previousProjectStatus = $this->currentProjectStatus;
-
-        // Calculate current actual and planned progress
-        $totalTickets = $this->project->tickets()->count();
-        $completedTickets = $this->project->tickets()
-            ->whereHas('status', function ($q) {
-                $q->where('is_completed', true);
-            })->count();
-
-        $this->actualProgress = $totalTickets > 0 ? round(($completedTickets / $totalTickets) * 100, 1) : 0;
-
-        // Calculate planned progress based on timeline
-        if ($this->project->start_date && $this->project->end_date) {
-            $startDate = Carbon::parse($this->project->start_date);
-            $endDate = Carbon::parse($this->project->end_date);
-            $now = Carbon::now();
-
-            if ($now->gte($endDate)) {
-                $this->plannedProgress = 100;
-            } elseif ($now->lte($startDate)) {
-                $this->plannedProgress = 0;
-            } else {
-                $totalDuration = $startDate->diffInDays($endDate);
-                $daysPassed = $startDate->diffInDays($now);
-                $this->plannedProgress = $totalDuration > 0 ? round(($daysPassed / $totalDuration) * 100, 1) : 0;
-            }
-        } else {
-            $this->plannedProgress = $this->actualProgress; // If no timeline, assume on track
-        }
-
-        // Determine current status
-        $deviation = $this->actualProgress - $this->plannedProgress;
-        $this->currentProjectStatus = $this->determineWeekStatus($deviation);
-    }
 
     private function determineWeekStatus($deviation): string
     {

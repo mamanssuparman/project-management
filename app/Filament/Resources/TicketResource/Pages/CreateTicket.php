@@ -22,8 +22,6 @@ class CreateTicket extends CreateRecord
 
             if ($ticket) {
                 $data = $ticket->toArray();
-
-                // Hapus field yang tidak boleh ikut ke tiket baru
                 unset(
                     $data['id'],
                     $data['uuid'],
@@ -33,21 +31,17 @@ class CreateTicket extends CreateRecord
                 );
 
                 $data['assignees'] = $ticket->assignees()->pluck('users.id')->toArray();
-
-                // isi form dengan data hasil copy
                 $this->form->fill($data);
 
                 return;
             }
         }
 
-        // fallback ke default behaviour
         parent::fillForm();
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Set created_by to current user
         $data['created_by'] = auth()->id();
 
         return $data;
@@ -55,10 +49,8 @@ class CreateTicket extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        // Create the ticket first
         $ticket = parent::handleRecordCreation($data);
 
-        // Handle assignees validation and assignment
         if (!empty($data['assignees']) && !empty($data['project_id'])) {
             $project = Project::find($data['project_id']);
             
@@ -76,12 +68,10 @@ class CreateTicket extends CreateRecord
                     }
                 }
                 
-                // Assign only valid users
                 if (!empty($validAssignees)) {
                     $ticket->assignees()->sync($validAssignees);
                 }
                 
-                // Show warning if some users were invalid
                 if (!empty($invalidAssignees)) {
                     Notification::make()
                         ->warning()
@@ -90,7 +80,6 @@ class CreateTicket extends CreateRecord
                         ->send();
                 }
                 
-                // If no valid assignees, assign current user if they're a member
                 if (empty($validAssignees)) {
                     $currentUserIsMember = $project->members()->where('users.id', auth()->id())->exists();
                     
@@ -106,7 +95,6 @@ class CreateTicket extends CreateRecord
                 }
             }
         } else {
-            // If no assignees provided, try to assign current user
             if (!empty($data['project_id'])) {
                 $project = Project::find($data['project_id']);
                 $currentUserIsMember = $project?->members()->where('users.id', auth()->id())->exists();

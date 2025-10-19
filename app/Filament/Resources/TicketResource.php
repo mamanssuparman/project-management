@@ -158,6 +158,7 @@ class TicketResource extends Resource
                 
                 Forms\Components\DatePicker::make('start_date')
                     ->label('Start Date')
+                    ->default(now())
                     ->nullable(),
                 
                 Forms\Components\DatePicker::make('due_date')
