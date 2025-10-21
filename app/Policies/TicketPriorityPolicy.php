@@ -1,108 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Models\User;
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\TicketPriority;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TicketPriorityPolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    
+    public function viewAny(AuthUser $authUser): bool
     {
-        return $user->can('view_any_ticket::priority');
+        return $authUser->can('ViewAny:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, TicketPriority $ticketPriority): bool
+    public function view(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('view_ticket::priority');
+        return $authUser->can('View:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function create(AuthUser $authUser): bool
     {
-        return $user->can('create_ticket::priority');
+        return $authUser->can('Create:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, TicketPriority $ticketPriority): bool
+    public function update(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('update_ticket::priority');
+        return $authUser->can('Update:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, TicketPriority $ticketPriority): bool
+    public function delete(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('delete_ticket::priority');
+        return $authUser->can('Delete:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
-    public function deleteAny(User $user): bool
+    public function restore(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('delete_any_ticket::priority');
+        return $authUser->can('Restore:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
-    public function forceDelete(User $user, TicketPriority $ticketPriority): bool
+    public function forceDelete(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('force_delete_ticket::priority');
+        return $authUser->can('ForceDelete:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
-    public function forceDeleteAny(User $user): bool
+    public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $user->can('force_delete_any_ticket::priority');
+        return $authUser->can('ForceDeleteAny:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
-    public function restore(User $user, TicketPriority $ticketPriority): bool
+    public function restoreAny(AuthUser $authUser): bool
     {
-        return $user->can('restore_ticket::priority');
+        return $authUser->can('RestoreAny:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
-    public function restoreAny(User $user): bool
+    public function replicate(AuthUser $authUser, TicketPriority $ticketPriority): bool
     {
-        return $user->can('restore_any_ticket::priority');
+        return $authUser->can('Replicate:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
-    public function replicate(User $user, TicketPriority $ticketPriority): bool
+    public function reorder(AuthUser $authUser): bool
     {
-        return $user->can('replicate_ticket::priority');
+        return $authUser->can('Reorder:TicketPriority');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
-    public function reorder(User $user): bool
-    {
-        return $user->can('reorder_ticket::priority');
-    }
 }

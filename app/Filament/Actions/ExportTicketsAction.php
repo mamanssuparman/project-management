@@ -2,10 +2,10 @@
 
 namespace App\Filament\Actions;
 
+use Filament\Schemas\Components\Section;
 use App\Exports\TicketsExport;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Section;
 use Filament\Notifications\Notification;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,7 +18,7 @@ class ExportTicketsAction
             ->label('Export to Excel')
             ->icon('heroicon-m-arrow-down-tray')
             ->color('success')
-            ->form([
+            ->schema([
                 Section::make('Select Columns to Export')
                     ->description('Choose which columns you want to include in the Excel export')
                     ->schema([

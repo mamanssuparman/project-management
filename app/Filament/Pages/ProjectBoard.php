@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Resources\TicketResource;
+use Illuminate\Support\Str;
+use Exception;
+use App\Filament\Resources\Tickets\TicketResource;
 use App\Models\Project;
 use App\Models\Ticket;
 use Filament\Actions\Action;
@@ -20,11 +22,11 @@ use Filament\Forms\Form;
 
 class ProjectBoard extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-view-columns';
-    protected static string $view = 'filament.pages.project-board';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-view-columns';
+    protected string $view = 'filament.pages.project-board';
     protected static ?string $title = 'Project Board';
     protected static ?string $navigationLabel = 'Project Board';
-    protected static ?string $navigationGroup = 'Project Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Project Management';
     protected static ?int $navigationSort = 4;
 
     public function getSubheading(): ?string
@@ -298,7 +300,7 @@ class ProjectBoard extends Page
                 ->label('Filter by User')
                 ->icon('heroicon-m-user-group')
                 ->visible(fn () => $this->selectedProject !== null && $this->projectUsers->isNotEmpty())
-                ->form([
+                ->schema([
                     CheckboxList::make('selectedUserIds')
                         ->label('Select Users to Filter')
                         ->options(fn () => $this->projectUsers->pluck('name', 'id')->toArray())
@@ -429,7 +431,7 @@ class ProjectBoard extends Page
 
         try {
             $fileName = 'tickets_' . ($this->selectedProject?->name ?? 'export') . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-            $fileName = \Illuminate\Support\Str::slug($fileName, '_') . '.xlsx';
+            $fileName = Str::slug($fileName, '_') . '.xlsx';
             $export = new TicketsExport($tickets, $selectedColumns);
             Excel::store($export, 'exports/' . $fileName, 'public');
             $downloadUrl = asset('storage/exports/' . $fileName);
@@ -455,7 +457,7 @@ class ProjectBoard extends Page
                 ->success()
                 ->send();
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Export Failed')
                 ->body('An error occurred while exporting: ' . $e->getMessage())

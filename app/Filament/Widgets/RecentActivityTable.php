@@ -2,6 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Carbon\Carbon;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
 use App\Models\TicketHistory;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -35,7 +41,7 @@ class RecentActivityTable extends BaseWidget
                     ->latest()
             )
             ->columns([
-                Tables\Columns\TextColumn::make('activity_summary')
+                TextColumn::make('activity_summary')
                     ->label('Activity')
                     ->state(function (TicketHistory $record): string {
                         $ticketName = $record->ticket->name ?? 'Unknown ticket';
@@ -55,7 +61,7 @@ class RecentActivityTable extends BaseWidget
                     ->html()
                     ->searchable(['users.name', 'tickets.name', 'tickets.uuid'])
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('status.name')
+                TextColumn::make('status.name')
                     ->label('Status')
                     ->badge()
                     ->alignEnd()
@@ -70,12 +76,12 @@ class RecentActivityTable extends BaseWidget
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\Filter::make('date_range')
-                    ->form([
-                        \Filament\Forms\Components\DatePicker::make('start_date')
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('start_date')
                             ->label('Start Date')
                             ->default(today()),
-                        \Filament\Forms\Components\DatePicker::make('end_date')
+                        DatePicker::make('end_date')
                             ->label('End Date')
                             ->default(today()),
                     ])
@@ -91,27 +97,27 @@ class RecentActivityTable extends BaseWidget
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if ($data['start_date'] ?? null) {
-                            $indicators[] = 'From: ' . \Carbon\Carbon::parse($data['start_date'])->format('M d, Y');
+                            $indicators[] = 'From: ' . Carbon::parse($data['start_date'])->format('M d, Y');
                         }
                         if ($data['end_date'] ?? null) {
-                            $indicators[] = 'To: ' . \Carbon\Carbon::parse($data['end_date'])->format('M d, Y');
+                            $indicators[] = 'To: ' . Carbon::parse($data['end_date'])->format('M d, Y');
                         }
                         return $indicators;
                     }),
 
-                Tables\Filters\Filter::make('today')
+                Filter::make('today')
                     ->label('Today Only')
                     ->query(fn ($query) => $query->whereDate('created_at', today()))
                     ->toggle(),
 
-                Tables\Filters\SelectFilter::make('user')
+                SelectFilter::make('user')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload(),
             ])
             ->filtersFormColumns(2)
-            ->actions([
-                Tables\Actions\Action::make('view')
+            ->recordActions([
+                Action::make('view')
                     ->label('')
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->size('sm')
