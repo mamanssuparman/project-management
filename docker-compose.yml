@@ -72,32 +72,28 @@ services:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
-    container_name: project-management-app
+    container_name: pm-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
     networks:
-      - direct_net
-      - dockerdb_samdev-networks  # tetap ada supaya bisa akses DB
+      - dockerdb_samdev-networks
 
   web:
     image: nginx:alpine
-    container_name: project-management
+    container_name: pm-nginx
     restart: unless-stopped
     ports:
-      - "8084:80"
+      - "8085:80"
     volumes:
       - ./:/var/www/html
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
     networks:
-      - direct_net
-      - dockerdb_samdev-networks  # tetap ada supaya bisa akses DB
+      - dockerdb_samdev-networks
 
 networks:
   dockerdb_samdev-networks:
     external: true
-  direct_net:
-    driver: bridge
