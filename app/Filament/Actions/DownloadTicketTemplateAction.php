@@ -18,7 +18,7 @@ class DownloadTicketTemplateAction
             ->label('Download Import Template')
             ->icon('heroicon-m-arrow-down-tray')
             ->color('info')
-            ->form([
+            ->schema([
                 Select::make('project_id')
                     ->label('Select Project')
                     ->options(function () {

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use Exception;
+use Log;
 use App\Models\User;
 use App\Models\Ticket;
 use App\Models\TicketHistory;
@@ -16,12 +18,12 @@ class Leaderboard extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-trophy';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-trophy';
     protected static ?string $navigationLabel = 'Leaderboard';
     protected static ?string $title = 'Contribution Leaderboard';
     protected static ?int $navigationSort = 6;
-    protected static string $view = 'filament.pages.leaderboard';
-    protected static ?string $navigationGroup = 'Analytics';
+    protected string $view = 'filament.pages.leaderboard';
+    protected static string | \UnitEnum | null $navigationGroup = 'Analytics';
     protected static ?string $slug = 'leaderboard';
 
     public string $timeRange = '7days'; // Changed from 'thisweek' to '7days'
@@ -121,8 +123,8 @@ class Leaderboard extends Page implements HasForms
                     ->count(),
                 'active_days' => $this->getUserActiveDays($userId)
             ];
-        } catch (\Exception $e) {
-            \Log::error('Error getting user stats: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Error getting user stats: ' . $e->getMessage());
             return [
                 'tickets_created' => 0,
                 'status_changes' => 0,
