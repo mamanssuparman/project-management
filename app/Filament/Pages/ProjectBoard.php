@@ -199,6 +199,7 @@ class ProjectBoard extends Page
     }
 
 
+
     #[On('ticket-moved')]
     public function moveTicket($ticketId, $newStatusId): void
     {

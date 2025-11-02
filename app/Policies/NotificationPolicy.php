@@ -14,57 +14,57 @@ class NotificationPolicy
     
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ViewAny:Notification');
+        return $authUser->can('view_any_notification');
     }
 
     public function view(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('View:Notification');
+        return $authUser->can('view_notification');
     }
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('Create:Notification');
+        return $authUser->can('create_notification');
     }
 
     public function update(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('Update:Notification');
+        return $authUser->can('update_notification');
     }
 
     public function delete(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('Delete:Notification');
+        return $authUser->can('delete_notification');
     }
 
     public function restore(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('Restore:Notification');
+        return $authUser->can('restore_notification');
     }
 
     public function forceDelete(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('ForceDelete:Notification');
+        return $authUser->can('force_delete_notification');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:Notification');
+        return $authUser->can('force_delete_any_notification');
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $authUser->can('RestoreAny:Notification');
+        return $authUser->can('restore_any_notification');
     }
 
     public function replicate(AuthUser $authUser, Notification $notification): bool
     {
-        return $authUser->can('Replicate:Notification');
+        return $authUser->can('replicate_notification');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
-        return $authUser->can('Reorder:Notification');
+        return $authUser->can('reorder_notification');
     }
 
 }
