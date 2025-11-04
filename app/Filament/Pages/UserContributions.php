@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use Exception;
+use Log;
 use App\Models\User;
 use App\Models\Ticket;
 use App\Models\TicketHistory;
@@ -17,12 +19,12 @@ class UserContributions extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
     protected static ?string $navigationLabel = 'User Contributions';
     protected static ?string $title = 'User Contributions';
     protected static ?int $navigationSort = 5;
-    protected static string $view = 'filament.pages.user-contributions';
-    protected static ?string $navigationGroup = 'Analytics';
+    protected string $view = 'filament.pages.user-contributions';
+    protected static string | \UnitEnum | null $navigationGroup = 'Analytics';
     protected static ?string $slug = 'user-contributions';
 
     public function getSubheading(): ?string
@@ -154,8 +156,8 @@ class UserContributions extends Page implements HasForms
                     ($statusChanges[$date] ?? 0) + 
                     ($comments[$date] ?? 0);
             }
-        } catch (\Exception $e) {
-            \Log::error('Error getting user activity: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Error getting user activity: ' . $e->getMessage());
         }
         
         return $activity;
@@ -222,8 +224,8 @@ class UserContributions extends Page implements HasForms
                     ->filter(fn($count) => $count > 0)
                     ->count()
             ];
-        } catch (\Exception $e) {
-            \Log::error('Error getting user stats: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Error getting user stats: ' . $e->getMessage());
             return [
                 'tickets_created' => 0,
                 'status_changes' => 0,

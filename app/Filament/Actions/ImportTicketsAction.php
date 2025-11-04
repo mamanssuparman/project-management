@@ -2,15 +2,15 @@
 
 namespace App\Filament\Actions;
 
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Actions;
+use Exception;
 use App\Imports\TicketsImport;
 use App\Exports\TicketTemplateExport;
 use App\Models\Project;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Notifications\Notification;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +24,7 @@ class ImportTicketsAction
             ->label('Import from Excel')
             ->icon('heroicon-m-arrow-up-tray')
             ->color('success')
-            ->form([
+            ->schema([
                 Section::make('Import Tickets from Excel')
                     ->description('Select a project and upload an Excel file to import tickets. You can download the template below after selecting a project.')
                     ->schema([
@@ -52,7 +52,7 @@ class ImportTicketsAction
                             }),
                         
                         Actions::make([
-                            FormAction::make('download_template')
+                            Action::make('download_template')
                                 ->label('Download Import Template')
                                 ->icon('heroicon-m-arrow-down-tray')
                                 ->color('info')
@@ -156,7 +156,7 @@ class ImportTicketsAction
                             ->send();
                     }
                     
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Clean up uploaded file
                     Storage::disk('local')->delete($data['excel_file']);
                     
